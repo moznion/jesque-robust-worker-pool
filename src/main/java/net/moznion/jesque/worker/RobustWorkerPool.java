@@ -3,6 +3,8 @@ package net.moznion.jesque.worker;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import net.greghaines.jesque.utils.ConcurrentHashSet;
+import net.greghaines.jesque.utils.ConcurrentSet;
 import net.greghaines.jesque.worker.ExceptionHandler;
 import net.greghaines.jesque.worker.JobFactory;
 import net.greghaines.jesque.worker.Worker;
@@ -19,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.IntStream;
@@ -33,8 +37,8 @@ public class RobustWorkerPool implements Worker {
     private static final long NO_DELAY = 0;
 
     private final int numWorkers;
-    private final Set<Worker> workerSet;
-    private final Map<Worker, Thread> workerThreadMap;
+    private final ConcurrentSet<Worker> workerSet;
+    private final ConcurrentMap<Worker, Thread> workerThreadMap;
     private final WorkerPoolEventEmitter workerPoolEventEmitter;
     private final Callable<? extends Worker> workerFactory;
     private final ThreadFactory threadFactory;
@@ -89,8 +93,8 @@ public class RobustWorkerPool implements Worker {
         isCalledJoin = false;
         joinMillis = -1;
 
-        workerSet = new HashSet<>(numWorkers);
-        workerThreadMap = new HashMap<>(numWorkers);
+        workerSet = new ConcurrentHashSet<>(numWorkers);
+        workerThreadMap = new ConcurrentHashMap<>(numWorkers);
 
         for (int i = 0; i < numWorkers; i++) {
             try {
