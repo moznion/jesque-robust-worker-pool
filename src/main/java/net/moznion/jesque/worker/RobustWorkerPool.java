@@ -24,6 +24,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.IntStream;
 
+/**
+ * Creates a fixed number of identical Workers, each on a separate {@code Thread}.
+ * <p>
+ * RobustWorkerPool monitors status of pooling workers and if it detects died worker then reincarnate a new worker.
+ */
 @Slf4j
 public class RobustWorkerPool implements Worker {
     private static final long NO_DELAY = 0;
@@ -31,7 +36,7 @@ public class RobustWorkerPool implements Worker {
     private final int numWorkers;
     private final Set<Worker> workerSet;
     private final Map<Worker, Thread> workerThreadMap;
-    private final WorkerPoolEventEmitter workerEventPoolEmitter;
+    private final WorkerPoolEventEmitter workerPoolEventEmitter;
     private final Callable<? extends Worker> workerFactory;
     private final ThreadFactory threadFactory;
     private final long delayToStartPollingMillis;
@@ -100,7 +105,7 @@ public class RobustWorkerPool implements Worker {
             }
         }
 
-        workerEventPoolEmitter = new WorkerPoolEventEmitter(this);
+        workerPoolEventEmitter = new WorkerPoolEventEmitter(this);
 
         this.delayToStartPollingMillis = delayToStartPollingMillis;
     }
@@ -150,7 +155,7 @@ public class RobustWorkerPool implements Worker {
 
     @Override
     public WorkerEventEmitter getWorkerEventEmitter() {
-        return this.workerEventPoolEmitter;
+        return this.workerPoolEventEmitter;
     }
 
     @Override
@@ -291,7 +296,7 @@ public class RobustWorkerPool implements Worker {
         final Collection<String> queues = diedWorker.getQueues();
         final ExceptionHandler exceptionHandler = diedWorker.getExceptionHandler();
         final Map<WorkerEvent, Set<WorkerListener>> eventToListenersMap =
-                workerEventPoolEmitter.getEventToListenersMapContainer().getEventToListenersMap();
+                workerPoolEventEmitter.getEventToListenersMapContainer().getEventToListenersMap();
 
         try {
             final Worker worker = workerFactory.call();
