@@ -346,43 +346,29 @@ public class RobustWorkerPool implements Worker {
             eventToListenersMapContainer = new EventToListenerMapContainer();
 
             // IF WORKER_START event is received, show message
-            eventToListenersMapContainer.addListener(Collections.singletonList(WorkerEvent.WORKER_START),
-                    (event, worker, queue, job, runner, result, t) -> {
-                        log.debug("Worker is started (Worker Name: {})", worker.getName());
-                        final long delay = this.pool.delayToStartPollingMillis;
-                        if (delay > 0) {
-                            try {
-                                Thread.sleep(delay);
-                            } catch (InterruptedException e) {
-                                log.warn(e.toString());
-                            }
-                        }
-                    });
+            addListener((event, worker, queue, job, runner, result, t) -> {
+                log.debug("Worker is started (Worker Name: {})", worker.getName());
+                final long delay = this.pool.delayToStartPollingMillis;
+                if (delay > 0) {
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        log.warn(e.toString());
+                    }
+                }
+            }, WorkerEvent.WORKER_START);
 
             // If WORKER_ERROR event is received, kills such worker
-            eventToListenersMapContainer.addListener(Collections.singletonList(WorkerEvent.WORKER_ERROR),
-                    (event, worker, queue, job, runner, result, t) -> {
-                        log.debug("Worker raise error (Worker Name: {})", worker.getName());
-                        worker.end(false);
-                    });
+            addListener((event, worker, queue, job, runner, result, t) -> {
+                log.debug("Worker raise error (Worker Name: {})", worker.getName());
+                worker.end(false);
+            }, WorkerEvent.WORKER_ERROR);
 
             // If WORKER_STOP event is received, reincarnate as a new worker
-            eventToListenersMapContainer.addListener(Collections.singletonList(WorkerEvent.WORKER_STOP),
-                    (event, worker, queue, job, runner, result, t) -> {
-                        log.debug("Worker is stopped (Worker Name: {})", worker.getName());
-                        reincarnateWorker(worker);
-                    });
-
-            // Register listeners that are at the above into each available workers.
-            for (Map.Entry<WorkerEvent, Set<WorkerListener>> entry :
-                    eventToListenersMapContainer.getEventToListenersMap().entrySet()) {
-                final WorkerEvent event = entry.getKey();
-                final Set<WorkerListener> listeners = entry.getValue();
-
-                for (WorkerListener listener : listeners) {
-                    addListener(listener, event);
-                }
-            }
+            addListener((event, worker, queue, job, runner, result, t) -> {
+                log.debug("Worker is stopped (Worker Name: {})", worker.getName());
+                reincarnateWorker(worker);
+            }, WorkerEvent.WORKER_STOP);
         }
 
         @Override
