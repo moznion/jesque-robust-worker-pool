@@ -276,11 +276,11 @@ public class RobustWorkerPool implements Worker {
     }
 
     /**
-     * Reincarnate as a new worker form died worker.
+     * Adjust number of active workers.
      *
-     * @param diedWorker target to reincarnate
+     * @param diedWorker a worker which fires WORKER_STOP event
      */
-    private synchronized void reincarnateWorker(Worker diedWorker) {
+    private synchronized void adjustWorkers(Worker diedWorker) {
         // Remove died worker from pooling information.
         workerSet.remove(diedWorker);
         workerThreadMap.remove(diedWorker);
@@ -409,10 +409,10 @@ public class RobustWorkerPool implements Worker {
                 worker.end(false);
             }, WorkerEvent.WORKER_ERROR);
 
-            // If WORKER_STOP event is received, reincarnate as a new worker
+            // If WORKER_STOP event is received, adjust active workers (reincarnate as a new worker or terminate excesses)
             addListener((event, worker, queue, job, runner, result, t) -> {
                 log.debug("Worker is stopped (Worker Name: {})", worker.getName());
-                reincarnateWorker(worker);
+                adjustWorkers(worker);
             }, WorkerEvent.WORKER_STOP);
         }
 
