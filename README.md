@@ -33,6 +33,7 @@ Motivation
 `WorkerPool` is an implementation of worker pooling which is provided by jesque core.
 However that doesn't any have interest in worker's status, alive or not.
 Means worker will not revive even if any worker die by unfortunate accident.
+
 Such behavior is not robust if making workers work long hours.
 So I make this implementation. This worker pool monitors about worker is alive or not.
 It also adjust number of workers (if missing workers exist then make new workers, and vice versa)
