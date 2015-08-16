@@ -2,7 +2,7 @@ jesque-robust-worker-pool [![Build Status](https://travis-ci.org/moznion/jesque-
 =============
 
 An implementation of worker pooling for [jesque](https://github.com/gresrun/jesque).
-It monitors status of pooling workers and if it detects died worker then reincarnate a new worker.
+It monitors status of pooling workers and if it detects died worker then adjust number of workers.
 
 Synopsis
 ---
