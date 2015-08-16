@@ -8,8 +8,8 @@
     <packaging>jar</packaging>
 
     <name>jesque-robust-worker-pool</name>
-    <description></description>
-    <url></url>
+    <description>An implementation of worker pooling for jesque. It monitors status of pooling workers, robust!</description>
+    <url>https://github.com/moznion/jesque-robust-worker-pool</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -190,9 +190,9 @@
     </distributionManagement>
 
     <scm>
-        <url></url>
-        <connection>scm:git:</connection>
-        <developerConnection>scm:git:</developerConnection>
+        <url>https://github.com/moznion/jesque-robust-worker-pool</url>
+        <connection>scm:git:git@github.com:moznion/jesque-robust-worker-pool.git</connection>
+        <developerConnection>scm:git:git@github.com:moznion/jesque-robust-worker-pool.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
