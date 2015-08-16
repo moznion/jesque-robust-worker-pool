@@ -1,4 +1,4 @@
-jesque-robust-worker-pool
+jesque-robust-worker-pool [![Build Status](https://travis-ci.org/moznion/jesque-robust-worker-pool.svg)](https://travis-ci.org/moznion/jesque-robust-worker-pool)
 =============
 
 An implementation of worker pooling for [jesque](https://github.com/gresrun/jesque).
@@ -8,6 +8,12 @@ Synopsis
 ---
 
 TBD
+
+Requires
+--
+
+- Java 8 or later
+- Jesque 2.0.2 or later
 
 Author
 --
