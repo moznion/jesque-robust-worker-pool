@@ -2,6 +2,7 @@ package net.moznion.jesque.worker;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.greghaines.jesque.utils.ConcurrentHashSet;
 import net.greghaines.jesque.utils.ConcurrentSet;
@@ -37,13 +38,19 @@ import java.util.stream.IntStream;
 public class RobustWorkerPool implements Worker {
     private static final long NO_DELAY = 0;
 
-    private final int numWorkers;
+    @Getter
     private final ConcurrentSet<Worker> workerSet;
+    @Getter
     private final ConcurrentMap<Worker, Thread> workerThreadMap;
+
     private final WorkerPoolEventEmitter workerPoolEventEmitter;
     private final Callable<? extends Worker> workerFactory;
     private final ThreadFactory threadFactory;
     private final long delayToStartPollingMillis;
+
+    @Getter
+    @Setter
+    private int numWorkers;
 
     private boolean isStarted;
     private boolean isEnded;
