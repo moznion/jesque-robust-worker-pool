@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -277,16 +278,32 @@ public class RobustWorkerPool implements Worker {
         workerSet.remove(diedWorker);
         workerThreadMap.remove(diedWorker);
 
-        final int numCurrentWorkers = workerSet.size();
-        log.debug("Number of current workers: {}", numCurrentWorkers);
-
-        // Adjust number of workers when missing workers existed.
-        // If already `end()` has called, do not reincarnate (make) a worker.
-        if (!isEnded && numCurrentWorkers < numWorkers) {
-            final int missingWorkersNum = numWorkers - numCurrentWorkers;
-            log.debug("Missing workers: {}", missingWorkersNum);
-            IntStream.rangeClosed(1, missingWorkersNum)
-                    .forEach(i -> spawnMissingWorker(diedWorker));
+        // If already `end()` has called, do not reincarnate (make) or terminate (kill) a worker.
+        if (!isEnded) {
+            {
+                // Adjust number of workers when missing workers existed.
+                // Spawn new workers up to the upper limit of workers.
+                final int numCurrentWorkers = workerSet.size();
+                log.debug("Number of current workers: {}", numCurrentWorkers);
+                if (numCurrentWorkers < numWorkers) {
+                    final int missingWorkersNum = numWorkers - numCurrentWorkers;
+                    log.debug("Missing workers: {}", missingWorkersNum);
+                    IntStream.rangeClosed(1, missingWorkersNum)
+                            .forEach(i -> spawnMissingWorker(diedWorker));
+                }
+            }
+            {
+                // Adjust number of workers when excess workers existed.
+                // Terminate excess workers.
+                final int numCurrentWorkers = workerSet.size();
+                log.debug("Number of current workers: {}", numCurrentWorkers);
+                if (numCurrentWorkers > numWorkers) {
+                    final int excessWorkersNum = numCurrentWorkers - numWorkers;
+                    log.debug("Excess workers: {}", excessWorkersNum);
+                    IntStream.rangeClosed(1, excessWorkersNum)
+                            .forEach(i -> terminateExcessWorker());
+                }
+            }
         }
     }
 
@@ -332,6 +349,24 @@ public class RobustWorkerPool implements Worker {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void terminateExcessWorker() {
+        List<Worker> workers = workerSet.stream().collect(Collectors.toList());
+        if (workers.size() <= 0) {
+            // DO NOTHING. There is no any worker
+            return;
+        }
+
+        // Pick up a worker. That will be terminated.
+        Worker victim = workers.get(0);
+
+        // Shutdown worker gracefully. It fires "WORKER_STOP" but it may not be effective.
+        victim.end(false);
+
+        // Remove a terminated worker from information of worker pooling.
+        workerSet.remove(victim);
+        workerThreadMap.remove(victim);
     }
 
     private class WorkerPoolEventEmitter implements WorkerEventEmitter {
