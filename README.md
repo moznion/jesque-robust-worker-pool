@@ -7,13 +7,36 @@ It monitors status of pooling workers and if it detects died worker then reincar
 Synopsis
 ---
 
-TBD
+```java
+final Config config = new ConfigBuilder().build();
+final Map<String, Class<? extends Runnable>> actionMap = new HashMap<>();
+actionMap.put("TestAction", TestAction.class);
+
+final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
+    new WorkerImpl(config, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
+    10, Executors.defaultThreadFactory());
+
+workerPool.run();
+
+# workerPool.endAndJoin(false, 0);
+```
 
 Requires
 --
 
 - Java 8 or later
 - Jesque 2.0.2 or later
+
+Motivation
+--
+
+`WorkerPool` is an implementation of worker pooling which is provided by jesque core.
+However that doesn't any have interest in worker's status, alive or not.
+Means worker will not revive even if any worker die by unfortunate accident.
+Such behavior is not robust if making workers work long hours.
+So I make this implementation. This worker pool monitors about worker is alive or not.
+It also adjust number of workers (if missing workers exist then make new workers, and vice versa)
+automatically when any worker is stopped.
 
 Author
 --
