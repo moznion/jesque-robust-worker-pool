@@ -3,7 +3,7 @@
 
     <groupId>net.moznion</groupId>
     <artifactId>jesque-robust-worker-pool</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>jesque-robust-worker-pool</name>
@@ -192,7 +192,7 @@
         <url>https://github.com/moznion/jesque-robust-worker-pool</url>
         <connection>scm:git:git@github.com:moznion/jesque-robust-worker-pool.git</connection>
         <developerConnection>scm:git:git@github.com:moznion/jesque-robust-worker-pool.git</developerConnection>
-        <tag>jesque-robust-worker-pool-0.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
