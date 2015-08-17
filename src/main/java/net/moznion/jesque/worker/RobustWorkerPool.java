@@ -50,12 +50,12 @@ public class RobustWorkerPool implements Worker {
 
     @Getter
     @Setter
-    private int numWorkers;
+    private volatile int numWorkers;
 
-    private boolean isStarted;
-    private boolean isEnded;
-    private boolean isCalledJoin;
-    private long joinMillis;
+    private volatile boolean isStarted;
+    private volatile boolean isEnded;
+    private volatile boolean isCalledJoin;
+    private volatile long joinMillis;
 
     /**
      * Create a RobustWorkerPool with the given number of Workers and the default
