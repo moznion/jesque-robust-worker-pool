@@ -50,7 +50,12 @@ public class RobustWorkerPoolTest {
 
         final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
                 new WorkerImpl(CONFIG, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
-                10, Executors.defaultThreadFactory());
+                10,
+                (event, worker, queue, errorJob, runner, result, t) -> {
+                    log.debug("Worker raise error (Worker Name: {})", worker.getName());
+                    worker.end(false);
+                },
+                Executors.defaultThreadFactory());
 
         workerPool.run();
 
@@ -82,14 +87,19 @@ public class RobustWorkerPoolTest {
 
         final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
                 new FailingWorker(CONFIG, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
-                10, Executors.defaultThreadFactory(), 500);
+                10,
+                (event, worker, queue, errorJob, runner, result, t) -> {
+                    log.debug("Worker raise error (Worker Name: {})", worker.getName());
+                    worker.end(false);
+                },
+                Executors.defaultThreadFactory(), 500);
 
         workerPool.run();
 
         // XXX: dirty...
         // To wait until all workers are spawned
         try {
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
         }
 
@@ -112,7 +122,12 @@ public class RobustWorkerPoolTest {
 
         final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
                 new FailingWorker(CONFIG, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
-                10, Executors.defaultThreadFactory(), 500);
+                10,
+                (event, worker, queue, errorJob, runner, result, t) -> {
+                    log.debug("Worker raise error (Worker Name: {})", worker.getName());
+                    worker.end(false);
+                },
+                Executors.defaultThreadFactory(), 500);
 
         workerPool.setNumWorkers(8); // change number of upper limit of workers
 
@@ -144,7 +159,7 @@ public class RobustWorkerPoolTest {
         @Override
         public void poll() {
             log.debug("Fail");
-            throw new RuntimeException();
+            this.recoverFromException(null, new RuntimeException());
         }
     }
 }

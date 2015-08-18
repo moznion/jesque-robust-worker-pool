@@ -76,25 +76,45 @@ public class RobustWorkerPool implements Worker {
     /**
      * Create a RobustWorkerPool with the given number of Workers and the default
      * {@code ThreadFactory} and the default delay to start polling (default: no delay).
+     * <p>
+     * NOTES: This constructor sets handling to recover for {@code WORKER_ERROR} event which does nothing.
+     * That handling should be specified by user so should consider to use other constructors.
      *
      * @param workerFactory a Callable that returns an implementation of Worker
      * @param numWorkers    the number of Workers to create
+     * @deprecated
      */
     public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers) {
-        this(workerFactory, numWorkers, Executors.defaultThreadFactory(), NO_DELAY);
+        this(workerFactory, numWorkers, (event, worker, queue, errorJob, runner, result, t) -> {
+            log.warn("HIGHLY RECOMMEND: Handling to recover for `WORKER_ERROR` should be set. "
+                    + "Please consider to use other constructors.");
+        }, Executors.defaultThreadFactory(), NO_DELAY);
+    }
+
+    /**
+     * Create a RobustWorkerPool with the given number of Workers and the default
+     * {@code ThreadFactory} and the default delay to start polling (default: no delay).
+     *
+     * @param workerFactory      a Callable that returns an implementation of Worker
+     * @param errorEventListener a handling to recover a worker when it fires {@code WORKER_ERROR} event
+     * @param numWorkers         the number of Workers to create
+     */
+    public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers, final WorkerListener errorEventListener) {
+        this(workerFactory, numWorkers, errorEventListener, Executors.defaultThreadFactory(), NO_DELAY);
     }
 
     /**
      * Create a RobustWorkerPool with the given number of Workers and the given
      * {@code ThreadFactory} and the default delay to start polling (default: no delay).
      *
-     * @param workerFactory a Callable that returns an implementation of Worker
-     * @param numWorkers    the number of Workers to create
-     * @param threadFactory the factory to create pre-configured Threads
+     * @param workerFactory      a Callable that returns an implementation of Worker
+     * @param numWorkers         the number of Workers to create
+     * @param errorEventListener a handling to recover a worker when it fires {@code WORKER_ERROR} event
+     * @param threadFactory      the factory to create pre-configured Threads
      */
-    public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers,
+    public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers, final WorkerListener errorEventListener,
                             final ThreadFactory threadFactory) {
-        this(workerFactory, numWorkers, threadFactory, NO_DELAY);
+        this(workerFactory, numWorkers, errorEventListener, threadFactory, NO_DELAY);
     }
 
     /**
@@ -103,10 +123,11 @@ public class RobustWorkerPool implements Worker {
      *
      * @param workerFactory             a Callable that returns an implementation of Worker
      * @param numWorkers                the number of Workers to create
+     * @param errorEventListener        a handling to recover a worker when it fires {@code WORKER_ERROR} event
      * @param threadFactory             the factory to create pre-configured Threads
      * @param delayToStartPollingMillis the milliseconds that represents delay to start polling when a new worker is spawned
      */
-    public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers,
+    public RobustWorkerPool(final Callable<? extends Worker> workerFactory, final int numWorkers, final WorkerListener errorEventListener,
                             final ThreadFactory threadFactory, final long delayToStartPollingMillis) {
         this.numWorkers = numWorkers;
         this.workerFactory = workerFactory;
@@ -132,7 +153,7 @@ public class RobustWorkerPool implements Worker {
             }
         }
 
-        workerPoolEventEmitter = new WorkerPoolEventEmitter(this);
+        workerPoolEventEmitter = new WorkerPoolEventEmitter(this, errorEventListener);
 
         this.delayToStartPollingMillis = delayToStartPollingMillis;
     }
@@ -398,7 +419,7 @@ public class RobustWorkerPool implements Worker {
         @Getter
         private final EventToListenerMapContainer eventToListenersMapContainer;
 
-        public WorkerPoolEventEmitter(@NonNull RobustWorkerPool pool) {
+        public WorkerPoolEventEmitter(@NonNull RobustWorkerPool pool, @NonNull WorkerListener errorEventListener) {
             this.pool = pool;
             if (this.pool.workerSet == null) {
                 throw new RuntimeException("Workers must not be null");
@@ -420,10 +441,7 @@ public class RobustWorkerPool implements Worker {
             }, WorkerEvent.WORKER_START);
 
             // If WORKER_ERROR event is received, kills such worker
-            addListener((event, worker, queue, job, runner, result, t) -> {
-                log.debug("Worker raise error (Worker Name: {})", worker.getName());
-                worker.end(false);
-            }, WorkerEvent.WORKER_ERROR);
+            addListener(errorEventListener, WorkerEvent.WORKER_ERROR);
 
             // If WORKER_STOP event is received, adjust active workers (reincarnate as a new worker or terminate excesses)
             addListener((event, worker, queue, job, runner, result, t) -> {
