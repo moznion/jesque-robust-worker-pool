@@ -318,6 +318,7 @@ public class RobustWorkerPool implements Worker {
             {
                 // Adjust number of workers when excess workers existed.
                 // Terminate excess workers.
+                // NOTE: FOR JUST IN CASE
                 final int numCurrentWorkers = workerSet.size();
                 log.debug("Number of current workers: {}", numCurrentWorkers);
                 if (numCurrentWorkers > numWorkers) {
