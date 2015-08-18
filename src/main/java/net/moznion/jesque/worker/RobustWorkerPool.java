@@ -318,6 +318,7 @@ public class RobustWorkerPool implements Worker {
             {
                 // Adjust number of workers when excess workers existed.
                 // Terminate excess workers.
+                // NOTE: FOR JUST IN CASE
                 final int numCurrentWorkers = workerSet.size();
                 log.debug("Number of current workers: {}", numCurrentWorkers);
                 if (numCurrentWorkers > numWorkers) {
@@ -418,12 +419,6 @@ public class RobustWorkerPool implements Worker {
                     }
                 }
             }, WorkerEvent.WORKER_START);
-
-            // If WORKER_ERROR event is received, kills such worker
-            addListener((event, worker, queue, job, runner, result, t) -> {
-                log.debug("Worker raise error (Worker Name: {})", worker.getName());
-                worker.end(false);
-            }, WorkerEvent.WORKER_ERROR);
 
             // If WORKER_STOP event is received, adjust active workers (reincarnate as a new worker or terminate excesses)
             addListener((event, worker, queue, job, runner, result, t) -> {

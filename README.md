@@ -16,9 +16,21 @@ final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
     new WorkerImpl(config, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
     10, Executors.defaultThreadFactory());
 
+// Highly recommend: Handling to recover for `WORKER_ERROR` event should be set like so:
+workerPool.getWorkerEventEmitter().addListener(
+    (event, worker, queue, errorJob, runner, result, t) -> {
+        log.info("Something handling to recover a worker when it fires `WORKER_ERROR` event");
+        log.info("You have the option of implementing error handling.");
+        // Do something
+    }, WorkerEvent.WORKER_ERROR
+)
+
 workerPool.run();
 
-# workerPool.endAndJoin(false, 0);
+// Uncomment followings with a situation.
+// workerPool.end(false);
+// workerPool.endAndJoin(false, 0);
+// ...
 ```
 
 Requires
@@ -31,13 +43,31 @@ Motivation
 --
 
 `WorkerPool` is an implementation of worker pooling which is provided by jesque core.
-However that doesn't any have interest in worker's status, alive or not.
-Means worker will not revive even if any worker die by unfortunate accident.
+However that doesn't have any interest in worker's status, alive or not.
+Means worker will not revive even if any workers die on polling.
 
 Such behavior is not robust if making workers work long hours.
 So I make this implementation. This worker pool monitors about worker is alive or not.
 It also adjust number of workers (if missing workers exist then make new workers, and vice versa)
-automatically when any worker is stopped.
+automatically when a worker is stopped.
+
+Features (different from original `WorkerPool`)
+--
+
+- Monitors status of pooled workers, dead or alive.
+- Adjust number of active workers. When a pooled worker is died on polling, manager will create a new worker and join it into pool.
+
+Tips
+--
+
+### How to add a listener for any event?
+
+Use `robustWorkerPool.getWorkerEventEmitter().addListener()` method. Please also refer to the above synopsis.
+
+See Also
+--
+
+- [jesque](https://github.com/gresrun/jesque)
 
 Author
 --
