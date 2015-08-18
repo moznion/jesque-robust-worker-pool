@@ -99,7 +99,7 @@ public class RobustWorkerPoolTest {
         // XXX: dirty...
         // To wait until all workers are spawned
         try {
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
         }
 

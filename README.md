@@ -12,9 +12,15 @@ final Config config = new ConfigBuilder().build();
 final Map<String, Class<? extends Runnable>> actionMap = new HashMap<>();
 actionMap.put("TestAction", TestAction.class);
 
-final RobustWorkerPool workerPool = new RobustWorkerPool(() ->
-    new WorkerImpl(config, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
-    10, Executors.defaultThreadFactory());
+final RobustWorkerPool workerPool = new RobustWorkerPool(
+    () -> new WorkerImpl(config, Collections.singletonList("foo"), new MapBasedJobFactory(actionMap)),
+    10,
+    (event, worker, queue, errorJob, runner, result, t) -> {
+        log.info("Something handling to recover a worker when it fires `WORKER_ERROR` event");
+        log.info("You have the option of implementing error handling.");
+        // Do something
+    },
+    Executors.defaultThreadFactory());
 
 workerPool.run();
 
